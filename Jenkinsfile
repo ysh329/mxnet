@@ -136,43 +136,57 @@ def python_gpu_ut(docker_type) {
   }
 }
 
-stage('Unit Test') {
-  parallel 'Python2/3: CPU': {
-    node {
-      ws('workspace/ut-python-cpu') {
-        init_git()
-        unpack_lib('cpu')
-        python_ut('cpu')
-      }
-    }
-  },
-  'Python2/3: GPU': {
+// stage('Unit Test') {
+//   parallel 'Python2/3: CPU': {
+//     node {
+//       ws('workspace/ut-python-cpu') {
+//         init_git()
+//         unpack_lib('cpu')
+//         python_ut('cpu')
+//       }
+//     }
+//   },
+//   'Python2/3: GPU': {
+//     node('GPU') {
+//       ws('workspace/ut-python-gpu') {
+//         init_git()
+//         unpack_lib('gpu', mx_lib)
+//         python_gpu_ut('gpu')
+//       }
+//     }
+//   },
+//   'Python2/3: MKLML': {
+//     node('GPU') {
+//       ws('workspace/ut-python-mklml') {
+//         init_git()
+//         unpack_lib('mklml')
+//         python_ut('mklml_gpu')
+//         python_gpu_ut('mklml_gpu')
+//       }
+//     }
+//   },
+//   'Scala: CPU': {
+//     node {
+//       ws('workspace/ut-scala-cpu') {
+//         init_git()
+//         unpack_lib('cpu')
+//         timeout(time: max_time, unit: 'MINUTES') {
+//           sh "${docker_run} cpu make scalapkg USE_BLAS=openblas"
+//           sh "${docker_run} cpu make scalatest USE_BLAS=openblas"
+//         }
+//       }
+//     }
+//   }
+// }
+
+stage('Integration test') {
+  parallel 'Python: GPU': {
     node('GPU') {
-      ws('workspace/ut-python-gpu') {
+      ws('workspace/it-python-gpu') {
         init_git()
-        unpack_lib('gpu', mx_lib)
-        python_gpu_ut('gpu')
-      }
-    }
-  },
-  'Python2/3: MKLML': {
-    node {
-      ws('workspace/ut-python-mklml') {
-        init_git()
-        unpack_lib('mklml')
-        python_ut('mklml_gpu')
-        python_gpu_ut('mklml_gpu')
-      }
-    }
-  },
-  'Scala: CPU': {
-    node {
-      ws('workspace/ut-scala-cpu') {
-        init_git()
-        unpack_lib('cpu')
+        unpack_lib('gpu')
         timeout(time: max_time, unit: 'MINUTES') {
-          sh "${docker_run} cpu make scalapkg USE_BLAS=openblas"
-          sh "${docker_run} cpu make scalatest USE_BLAS=openblas"
+          sh "${docker_run} gpu PYTHONPATH=./python/ python example/image-classification/test_score.py"
         }
       }
     }
